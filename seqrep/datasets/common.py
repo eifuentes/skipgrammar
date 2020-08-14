@@ -1,10 +1,13 @@
 """
 Common utilities for datasets.
 
-Borrowed heavily from [legacy Keras utils](https://github.com/keras-team/keras/tree/34231971fa47cb2477b357c1a368978de4128294/keras/utils).
+Borrowed heavily:
+- [Keras utils](https://github.com/keras-team/keras/tree/34231971fa47cb2477b357c1a368978de4128294/keras/utils)
+- [Lenskit datasets](https://github.com/lenskit/lkpy/blob/master/lenskit/datasets.py)
 """
 import collections
 import hashlib
+import logging
 import os
 import shutil
 import sys
@@ -15,6 +18,8 @@ from urllib.error import HTTPError, URLError
 from urllib.request import urlretrieve
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 class Progbar(object):
@@ -314,6 +319,8 @@ def get_file(
         if "SEQREP_HOME" in os.environ:
             cache_dir = os.environ.get("SEQREP_HOME")
         else:
+            if os.access(os.path.expanduser("~"), os.W_OK):
+                os.makedirs(os.path.join(os.path.expanduser("~"), ".seqrep"), exist_ok=True)
             cache_dir = os.path.join(os.path.expanduser("~"), ".seqrep")
     if md5_hash is not None and file_hash is None:
         file_hash = md5_hash
@@ -387,3 +394,18 @@ def get_file(
         _extract_archive(fpath, datadir, archive_format)
 
     return fpath
+
+
+def cached(prop):
+    cache = "_cached_" + prop.__name__
+
+    def getter(self):
+        val = getattr(self, cache, None)
+        if val is None:
+            val = prop(self)
+            setattr(self, cache, val)
+        return val
+
+    getter.__doc__ = prop.__doc__
+
+    return property(getter)
