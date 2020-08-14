@@ -1,2 +1,2 @@
-# seqems
-A framework for embedding sequences using machine learning.
+# Seqrep
+A framework for representing sequences as embeddings using machine learning.
