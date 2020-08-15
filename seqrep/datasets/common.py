@@ -1,7 +1,7 @@
 """
 Common utilities for datasets.
 
-Borrowed heavily:
+References:
 - [Keras utils](https://github.com/keras-team/keras/tree/34231971fa47cb2477b357c1a368978de4128294/keras/utils)
 - [Lenskit datasets](https://github.com/lenskit/lkpy/blob/master/lenskit/datasets.py)
 """
