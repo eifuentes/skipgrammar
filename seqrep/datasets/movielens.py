@@ -61,7 +61,7 @@ class MovieLens:
         filename = os.path.join(self.filepath, "ratings.csv")
         ratings = pd.read_csv(filename, dtype={"movieId": np.int32, "userId": np.int32, "rating": np.float64, "timestamp": np.int32})
         ratings.rename(columns={"userId": "user", "movieId": "item"}, inplace=True)
-        ratings["item"] = ratings.apply(lambda r: self._item_index_lu.get(r.loc['item']), axis='columns')
+        ratings["item"] = ratings.item.map(self._item_index_lu)
         ratings["timestamp"] = pd.to_datetime(ratings.timestamp, utc=True, unit='s', origin='unix')
         ratings = ratings.sort_values(['user', 'timestamp'], ascending=True)
         logger.debug("loaded %s, takes %d bytes", filename, ratings.memory_usage().sum())
@@ -83,7 +83,7 @@ class MovieLens:
         """
 
         movies = self.fetch_movies(self.filepath)
-        movies["item"] = movies.apply(lambda r: self._item_index_lu.get(r.loc['item']), axis='columns')
+        movies["item"] = movies.item.map(self._item_index_lu)
         movies.set_index("item", inplace=True)
         return movies
 
@@ -111,7 +111,7 @@ class MovieLens:
         filename = os.path.join(self.filepath, "links.csv")
         links = pd.read_csv(filename, dtype={"movieId": np.int32, "imdbId": np.int64, "tmdbId": pd.Int64Dtype()})
         links.rename(columns={"movieId": "item"}, inplace=True)
-        links["item"] = links.apply(lambda r: self._item_index_lu.get(r.loc['item']), axis='columns')
+        links["item"] = links.item.map(self._item_index_lu)
         links.set_index("item", inplace=True)
         logger.debug("loaded %s, takes %d bytes", filename, links.memory_usage().sum())
         return links
@@ -126,7 +126,7 @@ class MovieLens:
         filename = os.path.join(self.filepath, "tags.csv")
         tags = pd.read_csv(filename, dtype={"movieId": np.int32, "userId": np.int32, "tag": np.object, "timestamp": np.int32})
         tags.rename(columns={"userId": "user", "movieId": "item"}, inplace=True)
-        tags["item"] = tags.apply(lambda r: self._item_index_lu.get(r.loc['item']), axis='columns')
+        tags["item"] = tags.item.map(self._item_index_lu)
         tags["timestamp"] = pd.to_datetime(tags.timestamp, utc=True, unit='s', origin='unix')
         tags = tags.sort_values(['user', 'timestamp'], ascending=True)
         logger.debug("loaded %s, takes %d bytes", filename, tags.memory_usage().sum())
@@ -142,12 +142,11 @@ class MovieLens:
 
         filename = os.path.join(self.filepath, "genome-scores.csv")
         tags = pd.read_csv(os.path.join(self.filepath, "genome-tags.csv"))
-        tags["item"] = tags.apply(lambda r: self._item_index_lu.get(r.loc['item']), axis='columns')
         tags = tags.set_index("tagId")
         tags = tags["tag"].astype("category")
         genome = pd.read_csv(filename, dtype={"movieId": np.int32, "tagId": np.int32, "relevance": np.float64})
         genome.rename(columns={"userId": "user", "movieId": "item"}, inplace=True)
-        genome["item"] = genome.apply(lambda r: self._item_index_lu.get(r.loc['item']), axis='columns')
+        genome["item"] = genome.item.map(self._item_index_lu)
         genome = genome.join(tags, on="tagId")
         genome = genome.pivot(index="item", columns="tag", values="relevance")
         logger.debug("loaded %s, takes %d bytes", filename, genome.memory_usage().sum())
