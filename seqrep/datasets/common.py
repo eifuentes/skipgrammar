@@ -453,13 +453,19 @@ class UserItemMapDataset(MapDataset):
 
 
 class UserItemIterableDataset(IterableDataset):
-    def __init__(self, user_item_df, shuffle=True):
+    def __init__(self, user_item_df, max_window_size_lr=10, max_sequence_length=20, user_col="user", sort_col="timestamp", shuffle=True):
         super().__init__()
         self.df = user_item_df
+        self.max_sequence_length = max_sequence_length
+        self.max_window_size_lr = max_window_size_lr
+        self.user_col = user_col
+        self.sort_col = sort_col
         self.shuffle = shuffle
 
     def __iter__(self):
-        dataset = UserItemMapDataset(self.df)
+        dataset = UserItemMapDataset(
+            self.df, max_window_size_lr=self.max_window_size_lr, max_sequence_length=self.max_sequence_length, user_col=self.user_col, sort_col=self.sort_col
+        )
         if self.shuffle:
             sampler = RandomSampler(dataset)
         else:
