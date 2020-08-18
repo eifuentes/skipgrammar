@@ -76,6 +76,7 @@ class SGNS(nn.Module):
             weights = self.weights_
 
         # sample negative noise items from the distribution
+        # TODO make sure noise samples are not part of context
         negatives = torch.multinomial(weights, batch_size * self.num_negative_samples_, replacement=True)
         negative_embeddings = self.target_embeddings(negatives)
 
