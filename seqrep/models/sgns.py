@@ -81,3 +81,6 @@ class SGNS(nn.Module):
         negative_embeddings = self.target_embeddings(negatives)
 
         return anchors_embeddings, target_embeddings, negative_embeddings
+
+    def as_embedding(self, index):
+        return self.embeddings(torch.tensor(int(index)))

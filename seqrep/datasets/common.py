@@ -461,15 +461,16 @@ class UserItemIterableDataset(IterableDataset):
         self.user_col = user_col
         self.sort_col = sort_col
         self.shuffle = shuffle
+        self.dataset = None
 
     def __iter__(self):
-        dataset = UserItemMapDataset(
+        self.dataset = UserItemMapDataset(
             self.df, max_window_size_lr=self.max_window_size_lr, max_sequence_length=self.max_sequence_length, user_col=self.user_col, sort_col=self.sort_col
         )
         if self.shuffle:
-            sampler = RandomSampler(dataset)
+            sampler = RandomSampler(self.dataset)
         else:
-            sampler = SequentialSampler(dataset)
-        logger.debug(f"built stochastic skip-gram dataset n=({len(dataset):,})")
+            sampler = SequentialSampler(self.dataset)
+        logger.debug(f"built stochastic skip-gram dataset n=({len(self.dataset):,})")
         for rand_index in sampler:
-            yield dataset[rand_index]
+            yield self.dataset[rand_index]
