@@ -470,7 +470,6 @@ class UserItemIterableDataset(IterableDataset):
             sampler = RandomSampler(dataset)
         else:
             sampler = SequentialSampler(dataset)
-        # logger.debug(f'built stochastic skip-gram dataset n=({len(dataset):,})')
-        print(f"built stochastic skip-gram dataset n=({len(dataset):,})")
+        logger.debug(f"built stochastic skip-gram dataset n=({len(dataset):,})")
         for rand_index in sampler:
             yield dataset[rand_index]
