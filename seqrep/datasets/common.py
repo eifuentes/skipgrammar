@@ -18,6 +18,8 @@ from urllib.error import HTTPError, URLError
 from urllib.request import urlretrieve
 
 import numpy as np
+from torch.utils.data import Dataset as MapDataset
+from torch.utils.data import IterableDataset, RandomSampler, SequentialSampler
 
 logger = logging.getLogger(__name__)
 
@@ -409,3 +411,66 @@ def cached(prop):
     getter.__doc__ = prop.__doc__
 
     return property(getter)
+
+
+class UserItemMapDataset(MapDataset):
+    def __init__(self, user_item_df, max_window_size_lr=10, max_sequence_length=20, user_col="user", sort_col="timestamp"):
+        super().__init__()
+
+        # populate anchors and targets
+        self.anchors, self.targets = UserItemMapDataset.to_anchors_targets(
+            user_item_df, max_window_size_lr=max_window_size_lr, max_sequence_length=max_sequence_length, user_col=user_col, sort_col=sort_col
+        )
+
+    def __len__(self):
+        return len(self.anchors)
+
+    def __getitem__(self, index):
+        return self.anchors[index], self.targets[index]
+
+    @staticmethod
+    def get_target_items(sequence, anchor_index, window_size=2):
+        rand_num_items_lr = np.random.randint(1, window_size + 1)
+        start = anchor_index - rand_num_items_lr if (anchor_index - rand_num_items_lr) > 0 else 0
+        stop = anchor_index + rand_num_items_lr
+        target_items = sequence[start:anchor_index] + sequence[anchor_index + 1: stop + 1]
+        return list(target_items)
+
+    @staticmethod
+    def to_anchors_targets(user_item_df, max_window_size_lr=10, max_sequence_length=20, user_col="user", sort_col="timestamp"):
+        anchors, targets = list(), list()
+        iter_upper_bound = max_sequence_length - max_window_size_lr
+        for user_id, user_df in user_item_df.sort_values([user_col, sort_col], ascending=True).groupby(user_col):
+            id_sequence = user_df.id.tolist()
+            id_sequence.reverse()  # most recent first
+            id_sequence = id_sequence[:max_sequence_length] if len(id_sequence) > max_sequence_length else id_sequence
+            for anchor_index in range(0, min(iter_upper_bound, len(id_sequence))):
+                _targets = UserItemMapDataset.get_target_items(id_sequence, anchor_index, window_size=max_window_size_lr)  # stochastic method
+                _anchors = [id_sequence[anchor_index]] * len(_targets)
+                anchors += _anchors
+                targets += _targets
+        return anchors, targets
+
+
+class UserItemIterableDataset(IterableDataset):
+    def __init__(self, user_item_df, max_window_size_lr=10, max_sequence_length=20, user_col="user", sort_col="timestamp", shuffle=True):
+        super().__init__()
+        self.df = user_item_df
+        self.max_sequence_length = max_sequence_length
+        self.max_window_size_lr = max_window_size_lr
+        self.user_col = user_col
+        self.sort_col = sort_col
+        self.shuffle = shuffle
+        self.dataset = None
+
+    def __iter__(self):
+        self.dataset = UserItemMapDataset(
+            self.df, max_window_size_lr=self.max_window_size_lr, max_sequence_length=self.max_sequence_length, user_col=self.user_col, sort_col=self.sort_col
+        )
+        if self.shuffle:
+            sampler = RandomSampler(self.dataset)
+        else:
+            sampler = SequentialSampler(self.dataset)
+        logger.debug(f"built stochastic skip-gram dataset n=({len(self.dataset):,})")
+        for rand_index in sampler:
+            yield self.dataset[rand_index]
