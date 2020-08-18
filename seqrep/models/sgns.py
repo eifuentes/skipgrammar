@@ -83,4 +83,4 @@ class SGNS(nn.Module):
         return anchors_embeddings, target_embeddings, negative_embeddings
 
     def as_embedding(self, index):
-        return self.embeddings(torch.tensor(int(index)))
+        return self.embeddings(torch.tensor(index))
