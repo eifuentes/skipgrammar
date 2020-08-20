@@ -7,3 +7,9 @@
 - complete movielens documentation in docstrings
 - make UserItemIterableDataset more performant in `__iter__` method
 - replacing movielens with implicit dataset as primary example
+
+### Notebooks
+- use UMAP for embedding visuals
+
+### Module
+- publish v0.1.0
