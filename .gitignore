@@ -4,6 +4,8 @@
 
 # Seqrep
 lightning_logs
+notebooks/logs
+*.ckpt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
