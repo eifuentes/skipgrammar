@@ -1,6 +1,11 @@
-# Dev Specific
+# MacOS Local
 .vscode
 .DS_Store
+
+# Seqrep
+lightning_logs
+notebooks/logs
+*.ckpt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

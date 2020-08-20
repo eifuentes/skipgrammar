@@ -1,0 +1,15 @@
+### Models
+- confirm sgns weight initialization
+- negative samples overlap with target words in low cardinality scenarios
+- confirm var names inside sgns model and add docstring documentation
+
+### Datasets
+- complete movielens documentation in docstrings
+- make UserItemIterableDataset more performant in `__iter__` method
+- replacing movielens with implicit dataset as primary example
+
+### Notebooks
+- use UMAP for embedding visuals
+
+### Module
+- publish v0.1.0
