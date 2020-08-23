@@ -414,12 +414,17 @@ def cached(prop):
 
 
 class UserItemMapDataset(MapDataset):
-    def __init__(self, user_item_df, max_window_size_lr=10, max_sequence_length=20, user_col="user", sort_col="timestamp"):
+    def __init__(self, user_item_df, max_window_size_lr=10, max_sequence_length=20, user_col="user", sort_col="timestamp", item_col="id"):
         super().__init__()
 
         # populate anchors and targets
         self.anchors, self.targets = UserItemMapDataset.to_anchors_targets(
-            user_item_df, max_window_size_lr=max_window_size_lr, max_sequence_length=max_sequence_length, user_col=user_col, sort_col=sort_col
+            user_item_df,
+            max_window_size_lr=max_window_size_lr,
+            max_sequence_length=max_sequence_length,
+            user_col=user_col,
+            sort_col=sort_col,
+            item_col=item_col,
         )
 
     def __len__(self):
@@ -437,11 +442,11 @@ class UserItemMapDataset(MapDataset):
         return list(target_items)
 
     @staticmethod
-    def to_anchors_targets(user_item_df, max_window_size_lr=10, max_sequence_length=20, user_col="user", sort_col="timestamp"):
+    def to_anchors_targets(user_item_df, max_window_size_lr=10, max_sequence_length=20, user_col="user", sort_col="timestamp", item_col="id"):
         anchors, targets = list(), list()
         iter_upper_bound = max_sequence_length - max_window_size_lr
         for user_id, user_df in user_item_df.sort_values([user_col, sort_col], ascending=True).groupby(user_col):
-            id_sequence = user_df.id.tolist()
+            id_sequence = user_df[item_col].tolist()
             id_sequence.reverse()  # most recent first
             id_sequence = id_sequence[:max_sequence_length] if len(id_sequence) > max_sequence_length else id_sequence
             for anchor_index in range(0, min(iter_upper_bound, len(id_sequence))):
@@ -453,19 +458,25 @@ class UserItemMapDataset(MapDataset):
 
 
 class UserItemIterableDataset(IterableDataset):
-    def __init__(self, user_item_df, max_window_size_lr=10, max_sequence_length=20, user_col="user", sort_col="timestamp", shuffle=True):
+    def __init__(self, user_item_df, max_window_size_lr=10, max_sequence_length=20, user_col="user", sort_col="timestamp", item_col="id", shuffle=True):
         super().__init__()
         self.df = user_item_df
         self.max_sequence_length = max_sequence_length
         self.max_window_size_lr = max_window_size_lr
         self.user_col = user_col
         self.sort_col = sort_col
+        self.item_col = item_col
         self.shuffle = shuffle
         self.dataset = None
 
     def __iter__(self):
         self.dataset = UserItemMapDataset(
-            self.df, max_window_size_lr=self.max_window_size_lr, max_sequence_length=self.max_sequence_length, user_col=self.user_col, sort_col=self.sort_col
+            self.df,
+            max_window_size_lr=self.max_window_size_lr,
+            max_sequence_length=self.max_sequence_length,
+            user_col=self.user_col,
+            sort_col=self.sort_col,
+            item_col=self.item_col,
         )
         if self.shuffle:
             sampler = RandomSampler(self.dataset)
