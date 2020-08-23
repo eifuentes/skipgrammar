@@ -4,9 +4,10 @@
 - confirm var names inside sgns model and add docstring documentation
 
 ### Datasets
-- complete movielens documentation in docstrings
+- complete movielens and lastfm documentation in docstrings
 - make UserItemIterableDataset more performant in `__iter__` method
-- replacing movielens with implicit dataset as primary example
+- include optional session definition
+- generate train/test splits based on date
 
 ### Notebooks
 - use UMAP for embedding visuals
