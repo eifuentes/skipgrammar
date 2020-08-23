@@ -124,17 +124,11 @@ class MovieLens:
 
 class MovieLensUserItemDataset(UserItemIterableDataset):
     def __init__(
-        self,
-        variant,
-        min_item_cnt_thresh=5,
-        min_user_item_cnt_thresh=5,
-        max_window_size_lr=10,
-        max_sequence_length=20,
-        shuffle=True,
+        self, variant, min_item_cnt_thresh=5, min_user_item_cnt_thresh=5, max_window_size_lr=10, max_sequence_length=20, shuffle=True,
     ):
 
         if variant not in VARIANTS.keys():
-            raise KeyError(f'variant {variant} not supported.')
+            raise KeyError(f"variant {variant} not supported.")
 
         dset_filepath = get_file(fname=VARIANTS.get(variant).get("filename"), origin=VARIANTS.get(variant).get("origin"), extract=True)
         extract_dset_filepath = os.path.join(os.path.dirname(dset_filepath), VARIANTS.get(variant).get("extract").get("dirname"))
