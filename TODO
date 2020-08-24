@@ -9,7 +9,7 @@
 ### Datasets
 - complete movielens and lastfm documentation in docstrings
 - make UserItemIterableDataset more performant in `__iter__` method
-- include optional session definition
+- include optional session definition (800s)
 - generate train/test splits based on date
 
 ### Notebooks
