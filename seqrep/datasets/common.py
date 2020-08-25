@@ -485,3 +485,23 @@ class UserItemIterableDataset(IterableDataset):
         logger.debug(f"built stochastic skip-gram dataset n=({len(self.dataset):,})")
         for rand_index in sampler:
             yield self.dataset[rand_index]
+
+    @staticmethod
+    def item_frequencies(df, item_col="id"):
+        item_cnts = df[item_col].value_counts()
+        total = item_cnts.sum()
+        item_freq = (item_cnts / total).sort_index()
+        return item_freq
+
+    @staticmethod
+    def subsample(df, item_col="id", thresh=1e-5):
+        item_freq = UserItemIterableDataset.item_frequencies(df, item_col)
+        discard_dist = 1 - np.sqrt(thresh / item_freq)
+        subsampled = discard_dist.loc[(1 - discard_dist) > np.random.random(size=len(discard_dist))]
+        return subsampled.index.tolist()
+
+    @staticmethod
+    def item_distribution(df, item_col="id", p=0.75):
+        item_freq = UserItemIterableDataset.item_frequencies(df, item_col)
+        item_dist = (item_freq ** (p)) / np.sum(item_freq ** (p))
+        return item_dist
