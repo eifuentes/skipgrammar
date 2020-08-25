@@ -1,6 +1,9 @@
+import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 from pytorch_lightning import LightningModule
+
 from seqrep.models.sgns import negative_sampling_loss
 
 
@@ -47,7 +50,12 @@ class SGNS(LightningModule):
             weights = torch.ones(self.num_embeddings)
         else:
             # sample via provided weights
-            weights = self.weights
+            if isinstance(self.weights, pd.Series):
+                weights = torch.Tensor(self.weights.values)
+            elif isinstance(self.weights, np.array):
+                weights = torch.Tensor(self.weights)
+            else:
+                weights = self.weights
 
         # sample negative noise items from the distribution
         # TODO make sure noise samples are not part of context

@@ -1,13 +1,13 @@
 ### Models
-- confirm sgns weight initialization
-- negative samples overlap with target words in low cardinality scenarios
 - confirm var names inside sgns model and add docstring documentation
+- provide cosine similiarty metric
 
 ### Datasets
 - complete movielens and lastfm documentation in docstrings
 - make UserItemIterableDataset more performant in `__iter__` method
-- include optional session definition
+- include optional session definition (800s)
 - generate train/test splits based on date
+- bring back deterministic windowing
 
 ### Notebooks
 - use UMAP for embedding visuals

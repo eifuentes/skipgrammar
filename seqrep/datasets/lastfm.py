@@ -69,7 +69,16 @@ class LastFM:
 
 class LastFMUserItemDataset(UserItemIterableDataset):
     def __init__(
-        self, variant, min_item_cnt_thresh=3, min_user_item_cnt_thresh=5, max_window_size_lr=10, max_sequence_length=20, shuffle=True,
+        self,
+        variant,
+        min_item_cnt_thresh=3,
+        min_user_item_cnt_thresh=5,
+        subsample_thresh=1e-5,
+        item_dist_exp=0.75,
+        session_timedelta="800s",
+        max_window_size_lr=10,
+        max_sequence_length=20,
+        shuffle=True,
     ):
 
         if variant not in VARIANTS.keys():
@@ -88,6 +97,8 @@ class LastFMUserItemDataset(UserItemIterableDataset):
         df = df.loc[df.artist_name.isin(item_cnts.loc[item_cnts >= int(min_item_cnt_thresh)].index)]
         user_cnts = df.user_id.value_counts()
         df = df.loc[df.user_id.isin(user_cnts.loc[user_cnts >= int(min_user_item_cnt_thresh)].index)]
+        artists = self.subsample(df, item_col="artist_name", thresh=subsample_thresh)
+        df = df.loc[df.artist_name.isin(artists)]
         logger.debug(len(df))
 
         item_id_lu = {a: i for i, a in zip(range(1, df.artist_name.nunique() + 1), df.artist_name.sort_values().unique())}
@@ -100,11 +111,13 @@ class LastFMUserItemDataset(UserItemIterableDataset):
             user_col="user_id",
             sort_col="timestamp",
             item_col="artist_cd",
-            shuffle=shuffle,
+            session_timedelta=session_timedelta,
+            shuffle=shuffle
         )
 
         self.id_metadata = {i: a for a, i, in item_id_lu.items()}
         self.num_items = len(self.id_metadata)
+        self.item_dist = self.item_distribution(self.df, item_col="artist_cd", p=item_dist_exp)
 
     def __iter__(self):
         return super().__iter__()
