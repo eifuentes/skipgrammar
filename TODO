@@ -1,8 +1,4 @@
 ### Models
-- confirm sgns weight initialization
-- include "unigram" weights method
-- include inverse frequencey method
-- negative samples overlap with target words in low cardinality scenarios
 - confirm var names inside sgns model and add docstring documentation
 - provide cosine similiarty metric
 
@@ -11,7 +7,7 @@
 - make UserItemIterableDataset more performant in `__iter__` method
 - include optional session definition (800s)
 - generate train/test splits based on date
-- bring back deterministic windowing???
+- bring back deterministic windowing
 
 ### Notebooks
 - use UMAP for embedding visuals
