@@ -18,6 +18,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import urlretrieve
 
 import numpy as np
+import pandas as pd
 from torch.utils.data import Dataset as MapDataset
 from torch.utils.data import IterableDataset, RandomSampler, SequentialSampler
 
@@ -414,7 +415,7 @@ def cached(prop):
 
 
 class UserItemMapDataset(MapDataset):
-    def __init__(self, user_item_df, max_window_size_lr=10, max_sequence_length=20, user_col="user", sort_col="timestamp", item_col="id"):
+    def __init__(self, user_item_df, max_window_size_lr=10, max_sequence_length=20, user_col="user", sort_col="timestamp", item_col="id", session_col=None):
         super().__init__()
 
         # populate anchors and targets
@@ -442,10 +443,11 @@ class UserItemMapDataset(MapDataset):
         return list(target_items)
 
     @staticmethod
-    def to_anchors_targets(user_item_df, max_window_size_lr=10, max_sequence_length=20, user_col="user", sort_col="timestamp", item_col="id"):
+    def to_anchors_targets(user_item_df, max_window_size_lr=10, max_sequence_length=20, user_col="user", sort_col="timestamp", item_col="id", session_col=None):
         anchors, targets = list(), list()
         iter_upper_bound = max_sequence_length - max_window_size_lr
-        for user_id, user_df in user_item_df.sort_values([user_col, sort_col], ascending=True).groupby(user_col):
+        groupbycols = [user_col, session_col] if session_col else [user_col]
+        for user_id, user_df in user_item_df.sort_values([user_col, sort_col], ascending=True).groupby(groupbycols):
             id_sequence = user_df[item_col].tolist()
             id_sequence.reverse()  # most recent first
             id_sequence = id_sequence[:max_sequence_length] if len(id_sequence) > max_sequence_length else id_sequence
@@ -458,7 +460,17 @@ class UserItemMapDataset(MapDataset):
 
 
 class UserItemIterableDataset(IterableDataset):
-    def __init__(self, user_item_df, max_window_size_lr=10, max_sequence_length=20, user_col="user", sort_col="timestamp", item_col="id", shuffle=True):
+    def __init__(
+        self,
+        user_item_df,
+        max_window_size_lr=10,
+        max_sequence_length=20,
+        user_col="user",
+        sort_col="timestamp",
+        item_col="id",
+        session_timedelta="800s",
+        shuffle=True,
+    ):
         super().__init__()
         self.df = user_item_df
         self.max_sequence_length = max_sequence_length
@@ -469,6 +481,9 @@ class UserItemIterableDataset(IterableDataset):
         self.shuffle = shuffle
         self.dataset = None
 
+        # session identification
+        self.sessions(timedelta=session_timedelta)
+
     def __iter__(self):
         self.dataset = UserItemMapDataset(
             self.df,
@@ -477,6 +492,7 @@ class UserItemIterableDataset(IterableDataset):
             user_col=self.user_col,
             sort_col=self.sort_col,
             item_col=self.item_col,
+            session_col="session_nbr"
         )
         if self.shuffle:
             sampler = RandomSampler(self.dataset)
@@ -485,6 +501,12 @@ class UserItemIterableDataset(IterableDataset):
         logger.debug(f"built stochastic skip-gram dataset n=({len(self.dataset):,})")
         for rand_index in sampler:
             yield self.dataset[rand_index]
+
+    def sessions(self, timedelta="800s"):
+        self.df["session_end"] = (
+            self.df.sort_values([self.user_col, self.sort_col], ascending=True).groupby(self.user_col)[self.sort_col].diff(periods=1) > pd.Timedelta(timedelta)
+        ).astype(int)
+        self.df["session_nbr"] = self.df.groupby(self.user_col).session_end.cumsum() + 1
 
     @staticmethod
     def item_frequencies(df, item_col="id"):

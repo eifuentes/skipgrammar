@@ -75,6 +75,7 @@ class LastFMUserItemDataset(UserItemIterableDataset):
         min_user_item_cnt_thresh=5,
         subsample_thresh=1e-5,
         item_dist_exp=0.75,
+        session_timedelta="800s",
         max_window_size_lr=10,
         max_sequence_length=20,
         shuffle=True,
@@ -110,7 +111,8 @@ class LastFMUserItemDataset(UserItemIterableDataset):
             user_col="user_id",
             sort_col="timestamp",
             item_col="artist_cd",
-            shuffle=shuffle,
+            session_timedelta=session_timedelta,
+            shuffle=shuffle
         )
 
         self.id_metadata = {i: a for a, i, in item_id_lu.items()}
