@@ -11,12 +11,14 @@ def negative_sampling_loss(atensor, ctensor, ntensor):
     num_negative_samples = ntensor.size(0) // batch_size
 
     if batch_size == 1:
-        raise RuntimeError('negative_sampling_loss assumes batch_size > 1')
+        raise RuntimeError("negative_sampling_loss assumes batch_size > 1")
 
     # reshape tensors
     atensor = atensor.view(batch_size, dim, 1)  # batch of column vectors
     ctensor = ctensor.view(batch_size, 1, dim)  # batch of row vectors
-    ntensor = ntensor.view(batch_size, num_negative_samples, dim)  # batch of row vectors for each negative sample
+    ntensor = ntensor.view(
+        batch_size, num_negative_samples, dim
+    )  # batch of row vectors for each negative sample
 
     # calcuate loss
     loss = torch.bmm(ctensor, atensor).sigmoid().log().squeeze()
@@ -38,7 +40,14 @@ class SGNS(nn.Module):
     >>> SGNS(1000, nn_embedding_kwargs={'sparse': True})
     """
 
-    def __init__(self, num_embeddings, embedding_dim=300, weights=None, num_negative_samples=5, nn_embedding_kwargs=dict()):
+    def __init__(
+        self,
+        num_embeddings,
+        embedding_dim=300,
+        weights=None,
+        num_negative_samples=5,
+        nn_embedding_kwargs=dict(),
+    ):
         super().__init__()
         self.num_embeddings_ = int(num_embeddings)
         self.embedding_dim_ = int(embedding_dim)
@@ -46,8 +55,16 @@ class SGNS(nn.Module):
         self.num_negative_samples_ = num_negative_samples
 
         # embeddings lookups
-        self.embeddings = nn.Embedding(num_embeddings=self.num_embeddings_, embedding_dim=self.embedding_dim_, **nn_embedding_kwargs)
-        self.target_embeddings = nn.Embedding(num_embeddings=self.num_embeddings_, embedding_dim=self.embedding_dim_, **nn_embedding_kwargs)
+        self.embeddings = nn.Embedding(
+            num_embeddings=self.num_embeddings_,
+            embedding_dim=self.embedding_dim_,
+            **nn_embedding_kwargs
+        )
+        self.target_embeddings = nn.Embedding(
+            num_embeddings=self.num_embeddings_,
+            embedding_dim=self.embedding_dim_,
+            **nn_embedding_kwargs
+        )
 
         # initilize parameters
         self.reset_parameters()
@@ -75,7 +92,9 @@ class SGNS(nn.Module):
 
         # sample negative noise items from the distribution
         # TODO make sure noise samples are not part of context
-        negatives = torch.multinomial(weights, batch_size * self.num_negative_samples_, replacement=True)
+        negatives = torch.multinomial(
+            weights, batch_size * self.num_negative_samples_, replacement=True
+        )
         negative_embeddings = self.target_embeddings(negatives)
 
         return anchors_embeddings, target_embeddings, negative_embeddings

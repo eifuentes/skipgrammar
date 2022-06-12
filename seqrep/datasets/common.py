@@ -38,7 +38,9 @@ class Progbar(object):
         interval: Minimum visual progress update interval (in seconds).
     """
 
-    def __init__(self, target, width=30, verbose=1, interval=0.05, stateful_metrics=None):
+    def __init__(
+        self, target, width=30, verbose=1, interval=0.05, stateful_metrics=None
+    ):
         self.target = target
         self.width = width
         self.verbose = verbose
@@ -48,7 +50,9 @@ class Progbar(object):
         else:
             self.stateful_metrics = set()
 
-        self._dynamic_display = (hasattr(sys.stdout, "isatty") and sys.stdout.isatty()) or "ipykernel" in sys.modules
+        self._dynamic_display = (
+            hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
+        ) or "ipykernel" in sys.modules
         self._total_width = 0
         self._seen_so_far = 0
         self._values = collections.OrderedDict()
@@ -69,7 +73,10 @@ class Progbar(object):
         for k, v in values:
             if k not in self.stateful_metrics:
                 if k not in self._values:
-                    self._values[k] = [v * (current - self._seen_so_far), current - self._seen_so_far]
+                    self._values[k] = [
+                        v * (current - self._seen_so_far),
+                        current - self._seen_so_far,
+                    ]
                 else:
                     self._values[k][0] += v * (current - self._seen_so_far)
                     self._values[k][1] += current - self._seen_so_far
@@ -83,7 +90,11 @@ class Progbar(object):
         now = time.time()
         info = " - %.0fs" % (now - self._start)
         if self.verbose == 1:
-            if now - self._last_update < self.interval and self.target is not None and current < self.target:
+            if (
+                now - self._last_update < self.interval
+                and self.target is not None
+                and current < self.target
+            ):
                 return
 
             prev_total_width = self._total_width
@@ -120,7 +131,11 @@ class Progbar(object):
             if self.target is not None and current < self.target:
                 eta = time_per_unit * (self.target - current)
                 if eta > 3600:
-                    eta_format = "%d:%02d:%02d" % (eta // 3600, (eta % 3600) // 60, eta % 60)
+                    eta_format = "%d:%02d:%02d" % (
+                        eta // 3600,
+                        (eta % 3600) // 60,
+                        eta % 60,
+                    )
                 elif eta > 60:
                     eta_format = "%d:%02d" % (eta // 60, eta % 60)
                 else:
@@ -323,7 +338,9 @@ def get_file(
             cache_dir = os.environ.get("SEQREP_HOME")
         else:
             if os.access(os.path.expanduser("~"), os.W_OK):
-                os.makedirs(os.path.join(os.path.expanduser("~"), ".seqrep"), exist_ok=True)
+                os.makedirs(
+                    os.path.join(os.path.expanduser("~"), ".seqrep"), exist_ok=True
+                )
             cache_dir = os.path.join(os.path.expanduser("~"), ".seqrep")
     if md5_hash is not None and file_hash is None:
         file_hash = md5_hash
@@ -415,7 +432,16 @@ def cached(prop):
 
 
 class UserItemMapDataset(MapDataset):
-    def __init__(self, user_item_df, max_window_size_lr=10, max_sequence_length=20, user_col="user", sort_col="timestamp", item_col="id", session_col=None):
+    def __init__(
+        self,
+        user_item_df,
+        max_window_size_lr=10,
+        max_sequence_length=20,
+        user_col="user",
+        sort_col="timestamp",
+        item_col="id",
+        session_col=None,
+    ):
         super().__init__()
 
         # populate anchors and targets
@@ -437,22 +463,44 @@ class UserItemMapDataset(MapDataset):
     @staticmethod
     def get_target_items(sequence, anchor_index, window_size=2):
         rand_num_items_lr = np.random.randint(1, window_size + 1)
-        start = anchor_index - rand_num_items_lr if (anchor_index - rand_num_items_lr) > 0 else 0
+        start = (
+            anchor_index - rand_num_items_lr
+            if (anchor_index - rand_num_items_lr) > 0
+            else 0
+        )
         stop = anchor_index + rand_num_items_lr
-        target_items = sequence[start:anchor_index] + sequence[anchor_index + 1: stop + 1]
+        target_items = (
+            sequence[start:anchor_index] + sequence[anchor_index + 1 : stop + 1]
+        )
         return list(target_items)
 
     @staticmethod
-    def to_anchors_targets(user_item_df, max_window_size_lr=10, max_sequence_length=20, user_col="user", sort_col="timestamp", item_col="id", session_col=None):
+    def to_anchors_targets(
+        user_item_df,
+        max_window_size_lr=10,
+        max_sequence_length=20,
+        user_col="user",
+        sort_col="timestamp",
+        item_col="id",
+        session_col=None,
+    ):
         anchors, targets = list(), list()
         iter_upper_bound = max_sequence_length - max_window_size_lr
         groupbycols = [user_col, session_col] if session_col else [user_col]
-        for user_id, user_df in user_item_df.sort_values([user_col, sort_col], ascending=True).groupby(groupbycols):
+        for user_id, user_df in user_item_df.sort_values(
+            [user_col, sort_col], ascending=True
+        ).groupby(groupbycols):
             id_sequence = user_df[item_col].tolist()
             id_sequence.reverse()  # most recent first
-            id_sequence = id_sequence[:max_sequence_length] if len(id_sequence) > max_sequence_length else id_sequence
+            id_sequence = (
+                id_sequence[:max_sequence_length]
+                if len(id_sequence) > max_sequence_length
+                else id_sequence
+            )
             for anchor_index in range(0, min(iter_upper_bound, len(id_sequence))):
-                _targets = UserItemMapDataset.get_target_items(id_sequence, anchor_index, window_size=max_window_size_lr)  # stochastic method
+                _targets = UserItemMapDataset.get_target_items(
+                    id_sequence, anchor_index, window_size=max_window_size_lr
+                )  # stochastic method
                 _anchors = [id_sequence[anchor_index]] * len(_targets)
                 anchors += _anchors
                 targets += _targets
@@ -492,7 +540,7 @@ class UserItemIterableDataset(IterableDataset):
             user_col=self.user_col,
             sort_col=self.sort_col,
             item_col=self.item_col,
-            session_col="session_nbr"
+            session_col="session_nbr",
         )
         if self.shuffle:
             sampler = RandomSampler(self.dataset)
@@ -504,7 +552,10 @@ class UserItemIterableDataset(IterableDataset):
 
     def sessions(self, timedelta="800s"):
         self.df["session_end"] = (
-            self.df.sort_values([self.user_col, self.sort_col], ascending=True).groupby(self.user_col)[self.sort_col].diff(periods=1) > pd.Timedelta(timedelta)
+            self.df.sort_values([self.user_col, self.sort_col], ascending=True)
+            .groupby(self.user_col)[self.sort_col]
+            .diff(periods=1)
+            > pd.Timedelta(timedelta)
         ).astype(int)
         self.df["session_nbr"] = self.df.groupby(self.user_col).session_end.cumsum() + 1
 
@@ -519,7 +570,9 @@ class UserItemIterableDataset(IterableDataset):
     def subsample(df, item_col="id", thresh=1e-5):
         item_freq = UserItemIterableDataset.item_frequencies(df, item_col)
         discard_dist = 1 - np.sqrt(thresh / item_freq)
-        subsampled = discard_dist.loc[(1 - discard_dist) > np.random.random(size=len(discard_dist))]
+        subsampled = discard_dist.loc[
+            (1 - discard_dist) > np.random.random(size=len(discard_dist))
+        ]
         return subsampled.index.tolist()
 
     @staticmethod
