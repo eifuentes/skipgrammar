@@ -11,7 +11,8 @@ import os
 import numpy as np
 import pandas as pd
 
-from skipgrammar.datasets.common import UserItemIterableDataset, cached, get_file
+from skipgrammar.datasets.common import (UserItemIterableDataset, cached,
+                                         get_file)
 
 logger = logging.getLogger(__name__)
 
