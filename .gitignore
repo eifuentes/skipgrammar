@@ -1,5 +1,7 @@
-# MacOS Local
+# Local
 .vscode
+
+# MacOS
 .DS_Store
 
 # Seqrep
