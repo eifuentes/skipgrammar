@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from pytorch_lightning import LightningModule
 
-from seqrep.models.sgns import negative_sampling_loss
+from skipgrammar.models.sgns import negative_sampling_loss
 
 
 class SGNS(LightningModule):

@@ -300,9 +300,9 @@ def get_file(
 ):
     """Downloads a file from a URL if it not already in the cache.
     By default the file at the url `origin` is downloaded to the
-    cache_dir `~/.seqrep`, placed in the cache_subdir `datasets`,
+    cache_dir `~/.skipgrammar`, placed in the cache_subdir `datasets`,
     and given the filename `fname`. The final location of a file
-    `example.txt` would therefore be `~/.seqrep/datasets/example.txt`.
+    `example.txt` would therefore be `~/.skipgrammar/datasets/example.txt`.
     Files in tar, tar.gz, tar.bz, and zip formats can also be extracted.
     Passing a hash will verify the file after download. The command line
     programs `shasum` and `sha256sum` can compute the hash.
@@ -339,15 +339,15 @@ def get_file(
         else:
             if os.access(os.path.expanduser("~"), os.W_OK):
                 os.makedirs(
-                    os.path.join(os.path.expanduser("~"), ".seqrep"), exist_ok=True
+                    os.path.join(os.path.expanduser("~"), ".skipgrammar"), exist_ok=True
                 )
-            cache_dir = os.path.join(os.path.expanduser("~"), ".seqrep")
+            cache_dir = os.path.join(os.path.expanduser("~"), ".skipgrammar")
     if md5_hash is not None and file_hash is None:
         file_hash = md5_hash
         hash_algorithm = "md5"
     datadir_base = os.path.expanduser(cache_dir)
     if not os.access(datadir_base, os.W_OK):
-        datadir_base = os.path.join("/tmp", ".seqrep")
+        datadir_base = os.path.join("/tmp", ".skipgrammar")
     datadir = os.path.join(datadir_base, cache_subdir)
     if not os.path.exists(datadir):
         os.makedirs(datadir)
