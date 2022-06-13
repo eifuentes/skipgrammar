@@ -10,7 +10,10 @@ repository = "https://github.com/eifuentes/skipgrammar"
 documentation = "https://github.com/eifuentes/skipgrammar"
 keywords = ["skipgram", "word2vec", "sequences", "deep-learning", "machine-learning"]
 classifiers = [
+    "Environment :: Console",
+    "Natural Language :: English",
     "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Scientific/Engineering :: Information Analysis",
 ]
