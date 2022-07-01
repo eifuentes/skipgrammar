@@ -435,11 +435,11 @@ class UserItemMapDataset(MapDataset):
     def __init__(
         self,
         user_item_df,
+        user_col="user",
+        item_col="id",
+        sort_col="timestamp",
         max_window_size_lr=10,
         max_sequence_length=20,
-        user_col="user",
-        sort_col="timestamp",
-        item_col="id",
         session_col=None,
     ):
         super().__init__()
@@ -447,11 +447,11 @@ class UserItemMapDataset(MapDataset):
         # populate anchors and targets
         self.anchors, self.targets = UserItemMapDataset.to_anchors_targets(
             user_item_df,
+            user_col=user_col,
+            item_col=item_col,
+            sort_col=sort_col,
             max_window_size_lr=max_window_size_lr,
             max_sequence_length=max_sequence_length,
-            user_col=user_col,
-            sort_col=sort_col,
-            item_col=item_col,
         )
 
     def __len__(self):
@@ -477,11 +477,11 @@ class UserItemMapDataset(MapDataset):
     @staticmethod
     def to_anchors_targets(
         user_item_df,
+        user_col="user",
+        item_col="id",
+        sort_col="timestamp",
         max_window_size_lr=10,
         max_sequence_length=20,
-        user_col="user",
-        sort_col="timestamp",
-        item_col="id",
         session_col=None,
     ):
         anchors, targets = list(), list()
@@ -511,21 +511,21 @@ class UserItemIterableDataset(IterableDataset):
     def __init__(
         self,
         user_item_df,
+        user_col="user",
+        item_col="id",
+        sort_col="timestamp",
         max_window_size_lr=10,
         max_sequence_length=20,
-        user_col="user",
-        sort_col="timestamp",
-        item_col="id",
         session_timedelta="800s",
         shuffle=True,
     ):
         super().__init__()
         self.df = user_item_df
+        self.user_col = user_col
+        self.item_col = item_col
+        self.sort_col = sort_col
         self.max_sequence_length = max_sequence_length
         self.max_window_size_lr = max_window_size_lr
-        self.user_col = user_col
-        self.sort_col = sort_col
-        self.item_col = item_col
         self.shuffle = shuffle
         self.dataset = None
 
@@ -535,11 +535,11 @@ class UserItemIterableDataset(IterableDataset):
     def __iter__(self):
         self.dataset = UserItemMapDataset(
             self.df,
+            user_col=self.user_col,
+            item_col=self.item_col,
+            sort_col=self.sort_col,
             max_window_size_lr=self.max_window_size_lr,
             max_sequence_length=self.max_sequence_length,
-            user_col=self.user_col,
-            sort_col=self.sort_col,
-            item_col=self.item_col,
             session_col="session_nbr",
         )
         if self.shuffle:
@@ -557,14 +557,12 @@ class UserItemIterableDataset(IterableDataset):
             .diff(periods=1)
             > pd.Timedelta(timedelta)
         ).astype(int)
-        self.df["session_nbr"] = self.df.groupby(self.user_col).session_end.cumsum() + 1
+        self.df["session_nbr"] = self.df.groupby(self.user_col)["session_end"].cumsum() + 1
+        self.df["session_id"] = self.df[self.user_col].astype(str) + "-" + self.df["session_nbr"].astype(str)
 
     @staticmethod
     def item_frequencies(df, item_col="id"):
-        item_cnts = df[item_col].value_counts()
-        total = item_cnts.sum()
-        item_freq = (item_cnts / total).sort_index()
-        return item_freq
+        return df[item_col].value_counts(normalize=True).sort_index()
 
     @staticmethod
     def subsample(df, item_col="id", thresh=1e-5):
