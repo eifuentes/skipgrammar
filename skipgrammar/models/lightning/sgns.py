@@ -24,10 +24,18 @@ class SGNS(LightningModule):
         super().__init__()
         self.num_embeddings = int(num_embeddings)
         self.embedding_dim = int(embedding_dim)
-        self.weights = weights
         self.num_negative_samples = num_negative_samples
         self.is_embedding_sparse = nn_embedding_kwargs.get("sparse", None)
         self.learning_rate = learning_rate
+
+        # negative noise sampling using weights
+        if weights is None:
+            # sample uniformly
+            weights = torch.ones(self.num_embeddings)
+
+        # Register negative sample weights torch Tensor within this nn module
+        # Required for PyTorch to put on correct device for sampling
+        self.register_buffer("negative_sample_weights", weights)
 
         # embeddings lookups
         self.embeddings = nn.Embedding(
@@ -52,31 +60,18 @@ class SGNS(LightningModule):
         nn.init.uniform_(self.embeddings.weight, -init_range, init_range)
         nn.init.constant_(self.target_embeddings.weight, 0.0)
 
-    def forward(self, anchors, target):
-        # infer batch size dynamically
+    def forward(self, anchors, targets):
+        # Fetch batch size
         batch_size = anchors.size(0)
 
         # embedding lookups
         anchors_embeddings = self.embeddings(anchors)
-        target_embeddings = self.target_embeddings(target)
-
-        # negative noise sampling using weights
-        if self.weights is None:
-            # sample uniformly
-            weights = torch.ones(self.num_embeddings)
-        else:
-            # sample via provided weights
-            if isinstance(self.weights, pd.Series):
-                weights = torch.Tensor(self.weights.values)
-            elif isinstance(self.weights, np.array):
-                weights = torch.Tensor(self.weights)
-            else:
-                weights = self.weights
+        target_embeddings = self.target_embeddings(targets)
 
         # sample negative noise items from the distribution
         # TODO make sure noise samples are not part of context
         negatives = torch.multinomial(
-            weights, batch_size * self.num_negative_samples, replacement=True
+            self.negative_sample_weights, batch_size * self.num_negative_samples, replacement=True
         )
         negative_embeddings = self.target_embeddings(negatives)
 

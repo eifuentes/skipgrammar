@@ -51,8 +51,16 @@ class SGNS(nn.Module):
         super().__init__()
         self.num_embeddings_ = int(num_embeddings)
         self.embedding_dim_ = int(embedding_dim)
-        self.weights_ = weights
         self.num_negative_samples_ = num_negative_samples
+
+        # negative noise sampling using weights
+        if weights is None:
+            # sample uniformly
+            weights = torch.ones(self.num_embeddings_)
+
+        # Register negative sample weights torch Tensor within this nn module
+        # Required for PyTorch to put on correct device for sampling
+        self.register_buffer("negative_sample_weights", weights)
 
         # embeddings lookups
         self.embeddings = nn.Embedding(
@@ -75,25 +83,17 @@ class SGNS(nn.Module):
         nn.init.constant_(self.target_embeddings.weight, 0.0)
 
     def forward(self, anchors, target):
-        # infer batch size dynamically
+        # Fetch batch size
         batch_size = anchors.size(0)
 
         # embedding lookups
         anchors_embeddings = self.embeddings(anchors)
         target_embeddings = self.target_embeddings(target)
 
-        # negative noise sampling using weights
-        if self.weights_ is None:
-            # sample uniformly
-            weights = torch.ones(self.num_embeddings_)
-        else:
-            # sample via provided weights
-            weights = self.weights_
-
         # sample negative noise items from the distribution
         # TODO make sure noise samples are not part of context
         negatives = torch.multinomial(
-            weights, batch_size * self.num_negative_samples_, replacement=True
+            self.negative_sample_weights, batch_size * self.num_negative_samples_, replacement=True
         )
         negative_embeddings = self.target_embeddings(negatives)
 
